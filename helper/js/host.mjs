@@ -7,6 +7,7 @@
 //   /var/lib/omarchy/image/target                     bin/omarchy-hw-platform (format=1, platform=...)
 //   $HOME/.config/omarchy                             bin/omarchy-plugin-add PLUGINS_DIR
 //   pacman -Q omarchy | omarchy-dev                   bin/omarchy-version
+//   /etc/os-release ID=omarchy                        verified verbatim on the Omarchy 4.0.4 VM image (2026-10-15)
 // Two markers are required so a leftover ~/.config/omarchy on plain Arch does not flip the profile.
 import * as std from "qjs:std";
 import * as os from "qjs:os";
@@ -20,7 +21,7 @@ export function homeDir() {
 
 function readOsRelease() {
   const out = { id: "", idLike: "", name: "" };
-  const txt = std.loadFile("/etc/os-release");
+  const txt = std.loadFile(std.getenv("OMAMARKET_OS_RELEASE") || "/etc/os-release"); // env override is for tests
   if (!txt) return out;
   for (const line of txt.split("\n")) {
     const m = /^([A-Z_]+)=("?)(.*)\2$/.exec(line.trim());
@@ -55,7 +56,9 @@ export function detectHost() {
   if (kernel !== "linux") return result;
 
   const home = homeDir();
+  result.osRelease = readOsRelease();
   const markers = {
+    osReleaseId: result.osRelease.id === "omarchy",
     omarchyPathEnv: !!std.getenv("OMARCHY_PATH"),
     envBootstrap: host.readable("/usr/share/omarchy/default/bash/env-bootstrap"),
     imageTarget: host.readable("/var/lib/omarchy/image/target"),
@@ -65,7 +68,6 @@ export function detectHost() {
   let score = Object.values(markers).filter(Boolean).length;
   if (score < 2) { markers.pacman = pacmanHas("omarchy") || pacmanHas("omarchy-dev"); if (markers.pacman) score++; }
   result.markers = markers;
-  result.osRelease = readOsRelease();
   if (score >= 2) result.profile = "omarchy";
   else if (result.osRelease.id === "arch" || result.osRelease.idLike.includes("arch")) result.profile = "arch";
   else result.profile = "linux";

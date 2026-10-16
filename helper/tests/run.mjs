@@ -40,6 +40,14 @@ std.unsetenv("OMAMARKET_HOST");
 const real = detectHost();
 ok(["omarchy", "arch", "linux", "macos", "windows", "freebsd", "openbsd", "netbsd", "unknown"].includes(real.profile), "real profile resolves");
 ok(real.kernel !== "linux" || real.osRelease !== null, "linux hosts read /etc/os-release");
+// os-release ID=omarchy (verbatim from the Omarchy 4.0.4 VM, 2026-10-15) counts as a marker: with a user config dir it reaches the 2-marker threshold.
+const osr = tmp + "/os-release"; { const f = std.open(osr, "w"); f.puts('NAME="Omarchy"\nID=omarchy\nID_LIKE=arch\nVERSION_ID="4.0.4"\n'); f.close(); }
+const fakeHome = tmp + "/omhome"; os.mkdir(fakeHome); os.mkdir(fakeHome + "/.config"); os.mkdir(fakeHome + "/.config/omarchy");
+const savedHome = std.getenv("HOME"); std.setenv("HOME", fakeHome); std.setenv("OMAMARKET_OS_RELEASE", osr);
+const viaOsRelease = detectHost();
+std.setenv("HOME", savedHome); std.unsetenv("OMAMARKET_OS_RELEASE");
+if (real.kernel === "linux") ok(viaOsRelease.profile === "omarchy" && viaOsRelease.markers.osReleaseId === true && viaOsRelease.markers.userConfig === true, "os-release ID=omarchy + ~/.config/omarchy => omarchy profile");
+else ok(viaOsRelease.profile === real.profile, "os-release marker is linux-only");
 
 // 3. Catalog ranking rule (offline): pinned block first, labeled, sponsored flag, utm on links.
 const c = catalog("odoo", { offline: true, noCache: true });
