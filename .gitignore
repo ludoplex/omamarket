@@ -1,0 +1,4 @@
+dist/
+helper/dist/
+*.tmp
+.DS_Store

@@ -1,0 +1,5 @@
+# helper.lock — the only helper build this plugin will install. Filled at release time by
+# helper/scripts/build.sh output (dist/omamarket.com.sha256).
+# Stamp: 2026-10-15T17:20-0600. Release v0.1.0 asset, built 2026-10-15T22:56Z with helper/scripts/build.sh (dist/omamarket.com.sha256).
+url=https://github.com/ludoplex/omamarket/releases/download/v0.1.0/omamarket.com
+sha256=422936c9d3546fb3e6d7c37883d0e3df6b1fc5e71043a73a5e26230cbd800323

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.ludoplex.omamarket",
+  "name": "Omamarket",
+  "version": "0.1.0",
+  "author": "Mighty House Inc",
+  "license": "MIT",
+  "description": "Browse software marketplaces (Odoo Apps, MCP registry, Atlassian, JetBrains, Shopify, Claude plugins) from the bar. The publisher's own listings are shown first, labeled; the store's results follow in native order.",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "BarWidget.qml" },
+  "barWidget": {
+    "displayName": "Omamarket",
+    "description": "Marketplace storefront with a disclosed pinned block",
+    "category": "Productivity",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

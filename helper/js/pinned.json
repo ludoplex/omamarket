@@ -1,0 +1,22 @@
+{
+  "_stamp": "2026-10-15T16:40-0600 helper/js/pinned.json",
+  "_note": "Block A of every lane: the publisher's own listings, shown first and labeled. Prices and names come from the module manifests in <local-path> (read 2026-10-15). 'live' flips to true only after the helper's HEAD check on storeUrl returns 200.",
+  "publisher": "Mighty House Inc",
+  "label": "From Mighty House",
+  "disclosure": "These listings are published by the maker of this plugin and are shown first. The marketplace's own results follow in the store's native order.",
+  "utm": "utm_source=omamarket&utm_medium=omarchy-plugin",
+  "lanes": {
+    "odoo": [
+      {"id": "mhi_mcp_connector", "name": "MCP Server Connector", "summary": "Model Context Protocol server inside Odoo: AI agents and MCP clients search, report on and (if you allow it) edit Odoo records with Odoo API keys, per-model permissions and an audit log.", "price": 49.0, "currency": "EUR", "storeUrl": "https://apps.odoo.com/apps/modules/19.0/mhi_mcp_connector", "live": false},
+      {"id": "mhi_mcp_oauth", "name": "MCP OAuth 2.1 Sign-In", "summary": "OAuth 2.1 authorization server for the MCP Connector: MCP clients sign in with the user's Odoo login and consent instead of a pasted API key (PKCE, resource indicators, scopes).", "price": 49.0, "currency": "EUR", "storeUrl": "https://apps.odoo.com/apps/modules/19.0/mhi_mcp_oauth", "live": false},
+      {"id": "mhi_ai_bill_digitizer", "name": "AI Bill Digitizer", "summary": "Fill draft vendor bills from PDF bills with any OpenAI-compatible LLM, local or cloud. Works with Odoo's own upload and journal alias import, checks totals and duplicates, logs every run.", "price": 99.0, "currency": "EUR", "storeUrl": "https://apps.odoo.com/apps/modules/19.0/mhi_ai_bill_digitizer", "live": false}
+    ],
+    "mcp": [
+      {"id": "mhi_mcp_connector", "name": "MCP Server Connector for Odoo 19", "summary": "Streamable-HTTP MCP server (2026-07-28 and legacy protocols) that runs inside your own Odoo; connect Claude Code, Codex, OpenCode or Cursor to your ERP with per-model permissions.", "price": 49.0, "currency": "EUR", "storeUrl": "https://apps.odoo.com/apps/modules/19.0/mhi_mcp_connector", "live": false}
+    ],
+    "shopify": [],
+    "atlassian": [],
+    "jetbrains": [],
+    "claude": []
+  }
+}
