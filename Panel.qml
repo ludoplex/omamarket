@@ -194,6 +194,7 @@ Panel {
           }
 
           Text {
+            textFormat: Text.PlainText
             visible: root.errorText.length > 0
             width: parent.width
             text: root.errorText
@@ -222,6 +223,7 @@ Panel {
                 width: parent.width
                 spacing: Style.space(2)
                 Text {
+                  textFormat: Text.PlainText
                   visible: row.modelData.kind === "header"
                   width: parent.width
                   text: row.modelData.kind === "header" ? row.modelData.text : ""
@@ -231,6 +233,7 @@ Panel {
                   font.bold: true
                 }
                 Text {
+                  textFormat: Text.PlainText
                   visible: row.modelData.kind === "header" && (row.modelData.hint || "").length > 0
                   width: parent.width
                   text: row.modelData.hint || ""
@@ -241,6 +244,7 @@ Panel {
                   wrapMode: Text.WordWrap
                 }
                 Text {
+                  textFormat: Text.PlainText
                   visible: row.modelData.kind === "empty"
                   width: parent.width
                   text: row.modelData.kind === "empty" ? row.modelData.text : ""
@@ -263,6 +267,7 @@ Panel {
                     anchors.margins: Style.space(4)
                     anchors.verticalCenter: parent.verticalCenter
                     Text {
+                      textFormat: Text.PlainText
                       width: parent.width
                       text: (row.modelData.kind === "item" ? row.modelData.item.name : "")
                         + (row.modelData.sponsored ? "  · sponsored" : "")
@@ -273,6 +278,7 @@ Panel {
                       elide: Text.ElideRight
                     }
                     Text {
+                      textFormat: Text.PlainText
                       width: parent.width
                       text: row.modelData.kind === "item"
                         ? [row.modelData.item.author, Model.priceText(row.modelData.item), Model.statText(row.modelData.item)].filter(function(s) { return s && s.length }).join(" · ")

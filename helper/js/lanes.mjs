@@ -200,6 +200,24 @@ export function searchDeepLink(lane, query) {
   }
 }
 
+/* Marketplace-controlled strings never reach the UI with markup or control characters
+   (maintainer finding on omacom/omarchy-plugin-marketplace#11762, 2026-10-16). */
+export function cleanText(value, max) {
+  return String(value === undefined || value === null ? "" : value)
+    .replace(/<[^>]*>/g, " ")            // strip any tag, including <img src=...>
+    .replace(/[<>]/g, " ")               // no stray angle brackets either
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ").trim().slice(0, max || 400);
+}
+
+const TEXT_FIELDS = ["id", "name", "summary", "author", "category", "version", "transport", "pricing"];
+function sanitizeItem(item) {
+  const out = Object.assign({}, item);
+  for (const k of TEXT_FIELDS) if (k in out) out[k] = cleanText(out[k], k === "summary" ? 400 : 200);
+  for (const k of ["url", "storeUrl", "remoteUrl"]) if (k in out && !/^https?:\/\/[^\s<>"']+$/i.test(String(out[k] || ""))) out[k] = "";
+  return out;
+}
+
 function matches(item, query) {
   if (!query) return true;
   const n = query.toLowerCase();
@@ -229,8 +247,8 @@ export function catalog(lane, opts) {
     writeCache(lane, key, { items, fetchedAt });
   }
   const q = opts.query || "";
-  const blockB = (lane === "odoo" ? items.filter((i) => matches(i, q)) : items).slice(0, opts.limit || 40);
-  const blockA = (pinned.lanes[lane] || []).filter((i) => matches(i, q) || !q).map((i) => Object.assign({}, i, { sponsored: true, url: withUtm(i.storeUrl, pinned.utm) }));
+  const blockB = (lane === "odoo" ? items.filter((i) => matches(i, q)) : items).slice(0, opts.limit || 40).map(sanitizeItem);
+  const blockA = (pinned.lanes[lane] || []).filter((i) => matches(i, q) || !q).map((i) => sanitizeItem(Object.assign({}, i, { sponsored: true, url: withUtm(i.storeUrl, pinned.utm) })));
   return {
     ok: true, lane, laneName: spec.name, nativeOrder: spec.native, fetchedAt, fromCache,
     publisher: pinned.publisher, label: pinned.label, disclosure: pinned.disclosure,

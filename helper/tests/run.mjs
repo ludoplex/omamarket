@@ -5,7 +5,7 @@
 import * as std from "qjs:std";
 import * as os from "qjs:os";
 import * as host from "oma:host";
-import { parseOdooCards, catalog, LANES, searchDeepLink } from "../js/lanes.mjs";
+import { parseOdooCards, catalog, LANES, searchDeepLink, cleanText } from "../js/lanes.mjs";
 import { detectHost, PROFILES } from "../js/host.mjs";
 import { handle, TOOLS, callTool, setWriter } from "../js/mcp.mjs";
 import { plan } from "../js/agents.mjs";
@@ -55,6 +55,19 @@ ok(c.ok && c.label === "From Mighty House", "label present");
 ok(c.pinned.length === 3 && c.pinned.every((p) => p.sponsored === true && p.url.includes("utm_source=omamarket")), "pinned block sponsored + utm");
 ok(c.items.length === 0 && c.disclosure.length > 20, "offline items empty, disclosure present");
 ok(catalog("nope", { offline: true }).ok === false, "unknown lane rejected");
+// Marketplace-controlled text is sanitized at the catalog boundary (issue 11762 maintainer finding).
+eq(cleanText('Evil <img src="http://attacker.example/x"> name'), "Evil name", "tags stripped");
+eq(cleanText("a <b>bold</b> & 1 < 2"), "a bold & 1 2", "angle brackets never survive");
+ok(cleanText("x".repeat(500)).length === 400, "length capped");
+{
+  const dir = tmp + "/cache/omamarket"; os.mkdir(tmp + "/cache"); os.mkdir(dir);
+  const f = std.open(dir + "/jetbrains.json", "w");
+  f.puts(JSON.stringify({ fetchedAt: Date.now(), items: [{ id: "p<i>1</i>", name: '<img src="http://attacker.example/pixel">Plugin', summary: "<script>x</script>ok", author: "V<b>", downloads: 1, url: "javascript:alert(1)" }] }));
+  f.close();
+  const poisoned = catalog("jetbrains", {});
+  const it = poisoned.items[0];
+  ok(poisoned.fromCache && it.name === "Plugin" && it.summary === "x ok" && it.author === "V" && it.id === "p 1" && it.url === "", "poisoned cache entry sanitized, non-http url dropped");
+}
 ok(Object.keys(LANES).every((l) => searchDeepLink(l, "x").startsWith("https://")), "deep links for every lane");
 const cq = catalog("odoo", { offline: true, noCache: true, query: "digitizer" });
 ok(cq.pinned.length === 1 && cq.pinned[0].id === "mhi_ai_bill_digitizer", "query filters pinned block");
