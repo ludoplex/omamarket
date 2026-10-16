@@ -22,7 +22,7 @@ rm -rf ~/.local/share/omamarket ~/.cache/omamarket
 ## External dependencies
 
 - `curl`, `sha256sum`, `bash`, `xdg-open` (all shipped with Omarchy). The helper uses the system `curl` for every network request.
-- No `sudo`, no `pkexec`, no binfmt registration. The helper is launched as `/bin/sh <path>/omamarket.com` because an APE file is a valid shell script by specification and Quickshell's `Process` execs directly.
+- No sudo or pkexec is required. No binfmt registration. The helper is launched as `/bin/sh <path>/omamarket.com` because an APE file is a valid shell script by specification and Quickshell's `Process` execs directly.
 - Network targets: `apps.odoo.com` (path-style browse pages only; `robots.txt` honored), `registry.modelcontextprotocol.io`, `marketplace.atlassian.com`, `plugins.jetbrains.com`, and `github.com` for the helper download. Responses are cached under `~/.cache/omamarket/`.
 - No telemetry. Store links carry `utm_source=omamarket` so the publisher can attribute visits on its own listings.
 

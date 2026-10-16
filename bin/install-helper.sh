@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # install-helper.sh — download the omamarket.com helper from a tag-pinned release and verify it.
 # Stamp: 2026-10-15T16:45-0600, bin/install-helper.sh
-# Marketplace baseline (SECURITY.md, read 2026-10-14): downloaded content may not be executed
-# "without verification". This script verifies sha256 from helper.lock BEFORE chmod and never
-# pipes anything to a shell. Nothing is written inside the plugin folder (the shell reloads on writes).
+# Marketplace baseline (SECURITY.md, read 2026-10-14): this script only downloads, verifies the
+# sha256 from helper.lock, sets the mode and moves the file into place. It does not run the file.
+# Nothing is written inside the plugin folder (the shell reloads on writes).
 set -euo pipefail
 export LC_ALL=C
 
@@ -33,6 +33,6 @@ printf '%s  %s\n' "$SHA" "$tmp" | sha256sum -c --quiet - || fail "sha256 mismatc
 chmod 0755 -- "$tmp"
 mv -f -- "$tmp" "$TARGET"
 trap - EXIT
-# Smoke: the APE is a shell script by specification; run it through sh (no binfmt needed).
-/bin/sh "$TARGET" version >/dev/null || fail "installed helper does not run"
+# This script never executes what it downloaded. The panel starts the helper later as its own
+# Process (/bin/sh <path>/omamarket.com ...); an APE file is a shell script by specification.
 printf '{"ok":true,"path":"%s"}\n' "$TARGET"
