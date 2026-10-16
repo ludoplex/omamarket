@@ -123,8 +123,9 @@ Panel {
     bar: root.bar
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(420))
-    contentHeight: panel.fittedContentHeight(content.implicitHeight)
+    contentWidth: panel.fittedContentWidth(Style.space(480))
+    // Capped so a 30-row lane leaves the bottom of the screen free; the Flickable scrolls the rest.
+    contentHeight: panel.fittedContentHeight(content.implicitHeight, Style.space(800))
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -132,160 +133,173 @@ Panel {
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
 
-      Column {
-        id: content
-        width: parent.width
-        spacing: Style.space(8)
+      // Long lanes scroll inside the card instead of running past the screen edge
+      // (the pattern of the first-party weather and clock panels).
+      Flickable {
+        id: scroll
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: content.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: contentHeight > height
 
-        Row {
-          spacing: Style.space(4)
-          Repeater {
-            model: Model.LANES
+        Column {
+          id: content
+          width: scroll.width
+          spacing: Style.space(8)
+
+          Flow {
+            width: parent.width
+            spacing: Style.space(4)
+            Repeater {
+              model: Model.LANES
+              Button {
+                required property string modelData
+                text: Model.LANE_LABELS[modelData]
+                selected: root.lane === modelData
+                bordered: true
+                onClicked: root.selectLane(modelData)
+              }
+            }
+          }
+
+          Row {
+            width: parent.width
+            spacing: Style.space(6)
+            Rectangle {
+              width: parent.width - refreshButton.width - Style.space(6)
+              height: Style.space(28)
+              color: "transparent"
+              border.color: root.barForeground
+              border.width: 1
+              radius: Style.space(4)
+              TextInput {
+                id: queryInput
+                anchors.fill: parent
+                anchors.margins: Style.space(6)
+                color: root.barForeground
+                font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                font.pixelSize: Style.font.body
+                text: root.query
+                onAccepted: { root.query = text; root.refresh() }
+              }
+            }
             Button {
-              required property string modelData
-              text: Model.LANE_LABELS[modelData]
-              selected: root.lane === modelData
+              id: refreshButton
+              text: root.loading ? "…" : "Search"
               bordered: true
-              onClicked: root.selectLane(modelData)
+              onClicked: { root.query = queryInput.text; root.refresh() }
             }
           }
-        }
 
-        Row {
-          width: parent.width
-          spacing: Style.space(6)
-          Rectangle {
-            width: parent.width - refreshButton.width - Style.space(6)
-            height: Style.space(28)
-            color: "transparent"
-            border.color: root.barForeground
-            border.width: 1
-            radius: Style.space(4)
-            TextInput {
-              id: queryInput
-              anchors.fill: parent
-              anchors.margins: Style.space(6)
-              color: root.barForeground
-              font.family: root.bar ? root.bar.fontFamily : Style.font.family
-              font.pixelSize: Style.font.body
-              text: root.query
-              onAccepted: { root.query = text; root.refresh() }
-            }
+          Text {
+            visible: root.errorText.length > 0
+            width: parent.width
+            text: root.errorText
+            color: root.barForeground
+            font.family: root.bar ? root.bar.fontFamily : Style.font.family
+            font.pixelSize: Style.font.bodySmall
+            wrapMode: Text.WordWrap
           }
+
           Button {
-            id: refreshButton
-            text: root.loading ? "…" : "Search"
+            visible: root.helperMissing
+            text: "Install helper (verified download)"
             bordered: true
-            onClicked: { root.query = queryInput.text; root.refresh() }
+            onClicked: root.installHelper()
           }
-        }
 
-        Text {
-          visible: root.errorText.length > 0
-          width: parent.width
-          text: root.errorText
-          color: root.barForeground
-          font.family: root.bar ? root.bar.fontFamily : Style.font.family
-          font.pixelSize: Style.font.bodySmall
-          wrapMode: Text.WordWrap
-        }
-
-        Button {
-          visible: root.helperMissing
-          text: "Install helper (verified download)"
-          bordered: true
-          onClicked: root.installHelper()
-        }
-
-        Repeater {
-          model: root.rows
-          delegate: Item {
-            id: row
-            required property var modelData
-            width: content.width
-            implicitHeight: rowColumn.implicitHeight + Style.space(4)
-            Column {
-              id: rowColumn
-              width: parent.width
-              spacing: Style.space(2)
-              Text {
-                visible: row.modelData.kind === "header"
+          Repeater {
+            model: root.rows
+            delegate: Item {
+              id: row
+              required property var modelData
+              width: content.width
+              implicitHeight: rowColumn.implicitHeight + Style.space(4)
+              Column {
+                id: rowColumn
                 width: parent.width
-                text: row.modelData.kind === "header" ? row.modelData.text : ""
-                color: root.barForeground
-                font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                font.pixelSize: Style.font.caption
-                font.bold: true
-              }
-              Text {
-                visible: row.modelData.kind === "header" && (row.modelData.hint || "").length > 0
-                width: parent.width
-                text: row.modelData.hint || ""
-                color: root.barForeground
-                opacity: 0.7
-                font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                font.pixelSize: Style.font.caption
-                wrapMode: Text.WordWrap
-              }
-              Text {
-                visible: row.modelData.kind === "empty"
-                width: parent.width
-                text: row.modelData.kind === "empty" ? row.modelData.text : ""
-                color: root.barForeground
-                opacity: 0.7
-                font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                font.pixelSize: Style.font.bodySmall
-                wrapMode: Text.WordWrap
-              }
-              Rectangle {
-                visible: row.modelData.kind === "item"
-                width: parent.width
-                height: itemText.implicitHeight + Style.space(8)
-                color: row.modelData.sponsored ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
-                radius: Style.space(4)
-                Column {
-                  id: itemText
-                  anchors.left: parent.left
-                  anchors.right: parent.right
-                  anchors.margins: Style.space(4)
-                  anchors.verticalCenter: parent.verticalCenter
-                  Text {
-                    width: parent.width
-                    text: (row.modelData.kind === "item" ? row.modelData.item.name : "")
-                      + (row.modelData.sponsored ? "  · sponsored" : "")
-                    color: root.barForeground
-                    font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                    font.pixelSize: Style.font.body
-                    font.bold: row.modelData.sponsored === true
-                    elide: Text.ElideRight
-                  }
-                  Text {
-                    width: parent.width
-                    text: row.modelData.kind === "item"
-                      ? [row.modelData.item.author, Model.priceText(row.modelData.item), Model.statText(row.modelData.item)].filter(function(s) { return s && s.length }).join(" · ")
-                      : ""
-                    color: root.barForeground
-                    opacity: 0.7
-                    font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                    font.pixelSize: Style.font.caption
-                    elide: Text.ElideRight
-                  }
+                spacing: Style.space(2)
+                Text {
+                  visible: row.modelData.kind === "header"
+                  width: parent.width
+                  text: row.modelData.kind === "header" ? row.modelData.text : ""
+                  color: root.barForeground
+                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                  font.pixelSize: Style.font.caption
+                  font.bold: true
                 }
-                MouseArea {
-                  anchors.fill: parent
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.openUrl(row.modelData.item.url)
+                Text {
+                  visible: row.modelData.kind === "header" && (row.modelData.hint || "").length > 0
+                  width: parent.width
+                  text: row.modelData.hint || ""
+                  color: root.barForeground
+                  opacity: 0.7
+                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.WordWrap
+                }
+                Text {
+                  visible: row.modelData.kind === "empty"
+                  width: parent.width
+                  text: row.modelData.kind === "empty" ? row.modelData.text : ""
+                  color: root.barForeground
+                  opacity: 0.7
+                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                  font.pixelSize: Style.font.bodySmall
+                  wrapMode: Text.WordWrap
+                }
+                Rectangle {
+                  visible: row.modelData.kind === "item"
+                  width: parent.width
+                  height: itemText.implicitHeight + Style.space(8)
+                  color: row.modelData.sponsored ? Qt.rgba(1, 1, 1, 0.06) : "transparent"
+                  radius: Style.space(4)
+                  Column {
+                    id: itemText
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: Style.space(4)
+                    anchors.verticalCenter: parent.verticalCenter
+                    Text {
+                      width: parent.width
+                      text: (row.modelData.kind === "item" ? row.modelData.item.name : "")
+                        + (row.modelData.sponsored ? "  · sponsored" : "")
+                      color: root.barForeground
+                      font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                      font.pixelSize: Style.font.body
+                      font.bold: row.modelData.sponsored === true
+                      elide: Text.ElideRight
+                    }
+                    Text {
+                      width: parent.width
+                      text: row.modelData.kind === "item"
+                        ? [row.modelData.item.author, Model.priceText(row.modelData.item), Model.statText(row.modelData.item)].filter(function(s) { return s && s.length }).join(" · ")
+                        : ""
+                      color: root.barForeground
+                      opacity: 0.7
+                      font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                      font.pixelSize: Style.font.caption
+                      elide: Text.ElideRight
+                    }
+                  }
+                  MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.openUrl(row.modelData.item.url)
+                  }
                 }
               }
             }
           }
-        }
 
-        Button {
-          visible: !!(root.result && root.result.searchUrl)
-          text: "Open store search in browser"
-          bordered: true
-          onClicked: root.openUrl(root.result.searchUrl)
+          Button {
+            visible: !!(root.result && root.result.searchUrl)
+            text: "Open store search in browser"
+            bordered: true
+            onClicked: root.openUrl(root.result.searchUrl)
+          }
         }
       }
     }
